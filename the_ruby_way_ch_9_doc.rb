@@ -225,77 +225,111 @@ I could see the one argument variant used to quickly filter and split off portio
 =begin
 9.2 Working with Stacks and Queues
 ------------------------------------------------
-A stack is a group of items that are stacked on top of each other, coming in the same end they are going out. 
-A queue is a group of items that are 'waiting in line' going in one end and coming out another. 
-Because these concepts are high level, they do not exist in the standard library, rather we will define our own classes to add these structures to our program. 
 
-The stack class defined here is to prevent regular unrestricted array access and make sure that the data we want to treat as a stack is treated as a stack. 
+Stacks use a LIFO data structure, and must be defined in ruby to prevent a stack operation from accessing an array at a position other than the last item. When we want a stack, we want ONLY a stack, so we create the class to restrict access to the definitions of a stack. The primary operations we want to allow are a push, pop, and a peek (for conditional evaluation.)
+
+9.2.1 Implementing a Stricter Stack
+A simple implementation of these rules can be seen below.
 =end
 		class Stack
 
 			def initialize
-				@store = [] #creates an instance variable to navigate the stack through Stack's methods.
+				@store = []
 			end
 
 			def push(x)
-				@store.push x #add values to the end
+				@store.push x
 			end
 
 			def pop
-				@store.pop #removes values from the end
+				@store.pop
 			end
 
-			def peek
-				@store.last #lets us see the item on top
+			#These last two options allow for better conditional evaluation re stack operations
+
+			def peek 
+				@store.last
 			end
 
 			def empty?
-				@store.empty? #allows us to check whether our stack is empty(finished)
+				@store.empty?
+			end
+
+		end
+=begin
+See how we are usin array methods, but are using them syntactically in the way we would use a stack, and compartmentalizing them so we cannot use array methods that allow access to any position other than the last.
+
+An example from SO given as to the application paradigms implicated by restricting arrays into these data structures are (for stacks) to do a 'depth first' walk, where we track our position on a tree by pushing a node onto the stack when we traverse to it, then popping it when we move back up the tree from it.
+
+When using a queue for tree navigation, you will get a breadth first approach, which allows you to push the entire tree into a queue in order, then evaluate them from the highest to lowest branches of the tree.
+
+These are very different methods of traversal, and at first glance, the differences in application seems to be in how much data you need to see and in what order you need to see it. As I type this and reflect, it would seem that fundamentally those needs will drive the formation of any custom data structure.
+
+-----------------------------------------------------
+9.2.2 Detecting Unbalanced Punctuation in Expressions
+-----------------------------------------------------
+
+We can use the traversal methods in a stack to navigate through an expression to make sure all open punctuations have been closed. This is an appropriate application because we need the openings first, then the closings, vs a queue which would require a counter system vs checking if the stack empties (that all openings have a closing). Data structures are all about making the right tool for the right job.
+=end
+	
+
+	def paren_match(str)
+		stack = Stack.new
+		lsym = "{[(<"
+		rsym = "}])>"
+		str.each_char do |sym|
+			if lsym.include? sym
+				stack.push(sym)
+			elsif rsym.include? sym
+				top = stack.peek 	#Here we begin to check against the last opening expression which 						 should be the first closing expression.
+				if lsym.index(top) != rsym.index(sym)
+					return false 	#Here we check if an expression is out of order or missing
+				else
+					stack.pop
+				end 				#This ignores non-grouped characters by leaving anything but 							characters pushed into the stack out of the conditional.
 			end
 		end
 
+		return stack.empty? 		#This will check if there are extra closing parens/make sure the 
+									# conditional evaluated properly.
+	end
 
-		def paren_match(str)
-			stack = Stack.new
-			lsym = "{[(<"
-			rsym = "}])>"
-			str.each_char do |sym|
-				if lsym.include? sym
-					stack.push(sym)                  #Here we are adding the opening parentheses to stack
-				elsif rsym.include? sym
-					top = stack.peek
-					if lsym.index(top) != rsym.index(sym)   #Here we see if the closing matches the opening
-						return false
-					else
-						stack.pop                       #Remove it if it matches
-					end
-				end
-			end
-			return stack.empty?                         #if the stack clears, everything opened and closed
-		end
+str1 =	"(((a+b))*((c-d)-(e*f))"
+str2 =	"[[(a-(b-c))],	[[x,y]]]"
 
-		str1 = "(((a+b))*((c-d)-(e*f))"
-		str2 = "[[(a-(b-c))],[[x,y]]]"
+p paren_match str1 #false
 
-		p "paren_match stack example"
-		p paren_match str1
-		p paren_match str2
+
+p paren_match str2 #true
 
 =begin
-2.4 Implementing a stricter queue
------------------------------------
+the 'nested nature' of this problem is what makes it a candidate for a stack oriented solution. Other similar applications would be html/xml tag openings and closures. You could even use it to match whitespace per line. This could be a good solution to noncongruent whitespace problems re people on the same team using different editors.
 
-In the same way that we built a Stack class to prevent us from illegally accessing our collection we wanted to use as a stack, the book will show us how to do the same thing with a Queue class. 
-	My guesses for differences will be primarily entry and exit, and there will be less emphasis on :empty? even though it will exist. 
+-----------------------------------------
+9.2.3 Understanding Stacks and Recursion
+-----------------------------------------
+
+When solving problems that are more conditional and exponential in nature, a recursive stratey should be used for a problem which may seem applicable to a stack oriented solution. stacks are very binary, and therefore should not be used to solve exponential problems where a recursive solution will function in a more elegant manner.
+
+----------------------------------------------------------------------
+9.2.4 Implementing a Stricter Queue (And material from 9.2 on Queues)
+----------------------------------------------------------------------
+
+A queue is a Fifo system, meaning that whatever comes first is served first, and the rest of the data is piled up behind it. Whereas a stack is basically managing data with a preprocessor, a queue manages data with a postprocessor, and I would assume preprocessing the elements included.
+
+A queue's application is also suited more to a realtime application (ie something where data cna enter at any time to 'wait' to be postprocessed, versus a stack which will determine what data it wants to work with, then process the existing data.). Queues are useful in  first come first serve situation. ie. impatient humans who want what they want first because they got there first.
+
+Defining a queue class to delimit the ways you can interact with the array is a recoomended way of forming a queue in Ruby.
 =end
+
 	class Queue
 
 		def initialize
 			@store = []
 		end
 
-		def enqueue(x)
-			@store<<x
+		def enqueue(x) 			#Here we are applying syntactical names to the queue operation
+			@store << x
 		end
 
 		def dequeue
@@ -316,20 +350,27 @@ In the same way that we built a Stack class to prevent us from illegally accessi
 
 	end
 
-diff = Set[1,2,3,4] - Set[1,1,3]
-p diff
+=begin
+The Queue class in the thread library is needed in threaded code. SizedQueue is a variant that is also threadsafe. These classes use the method names enq and deq and allow push and pop (which should not be used in a queue unless you are including a conditional for maintaining your queue size, or want to be able to remove processes once they are in the queue (but we could just use preprocessing to workaround this in queue fashion)).
 
+The queue class can be a good starting point for a thread safe stack class as well.
 
+-----------------------
+9.3 Working with trees
+-----------------------
 
+A tree is defined by its insertion algorithm and by how it is traversed.
 
+Trees start at the top as the 'root', then the following nodes are 'decendants'. a descendant has a 'child(ren)'' directly below it, and a 'parent' directly above it, and 'ancestors' above that. If a node has no children it is called a 'leaf'.
 
-p not_ger = all_usernames - ger_usernames
+There are binary trees (down and right) and multiway trees (down, left, and right).
 
-		
+To function a tree needs three things: 
+1. an attribute for storing data, 
+2. an attribute for referring to the left and right subtrees under that node,
+3. a way to insert into the tree,
+4. a way to get information out of the tree.
 
-
-
-
-
-
-	
+We will explore how to achieve these needs with two methods, then examine the Tree class
+ 
+=end
