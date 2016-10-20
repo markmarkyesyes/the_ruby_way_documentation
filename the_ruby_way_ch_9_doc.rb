@@ -412,7 +412,7 @@ class Tree
 			list << @left
 			list << @right
 			#This loop prevents us form keeping nil data in our array and ensures that every space in the tree is filled before moving onto the next node creation. 
-			loop do
+''			loop do
 				node = list.shift
 				if node.left == nil
 					node.insert(x)
@@ -495,7 +495,8 @@ class SortTree < Tree
 	end
 	#I dont understand the structure of this sort.
 
-	
+	#Using this method eliminates the data around the conditional match and recursively shortens the amount of data to search by going left and right close and closer to the number. This algorithm is better visualized as happening over a sorted array ( the form we have stored the binary tree in.)
+	#Having the tree sorted is what makes this possible (using sorted binary trees as lookup tables.) This is where the balanced and exponential nature of a binary tree allows for exponential and balanced traversal as well. 		
 	def search(x)
 		if self.data == x
 			return self
@@ -531,4 +532,31 @@ items.each	{|x|	tree.insert(x)}
 puts
 p s1 = tree.search(70)
 
+#\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+=begin
+Graphs in Ruby
 
+A graph is not necessarily a tree, but a tree is always a graph. This is true because a graph is simply defined as vertices connected in some way.
+
+An undirected graph is simply connected, while a directed graph is connected by one way streets. A weighted graph has connections with associated weights.
+
+=end
+
+class LowerMatrix < TriMatrix
+
+	#Here we initialize the vertex as 0 and inherit the TriMatrix class allowing us to assign values at x,y coordinates.
+	def initialize
+		@store = ZeroArray.new
+	end
+
+end
+
+class Graph
+
+	def initialize(*edges)
+		@store = LowerMatrix.new
+		@max = 0
+		#This each iteration creates the symmetrical negative version
+		edges.each do |e|
+			#The 0 and 1 indices represent the 
+			e[0], e[1] = e[1], e[0] if e[1] > e[0]
