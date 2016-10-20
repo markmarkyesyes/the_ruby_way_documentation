@@ -363,14 +363,172 @@ A tree is defined by its insertion algorithm and by how it is traversed.
 
 Trees start at the top as the 'root', then the following nodes are 'decendants'. a descendant has a 'child(ren)'' directly below it, and a 'parent' directly above it, and 'ancestors' above that. If a node has no children it is called a 'leaf'.
 
-There are binary trees (down and right) and multiway trees (down, left, and right).
+A tree must accomodate the ability to:
+1. store data in each node (one attribute)
+2. refer to the left and right subtrees under the node (one attribute each)
+3. insert data into the tree
+4. get information out of the tree.
 
-To function a tree needs three things: 
-1. an attribute for storing data, 
-2. an attribute for referring to the left and right subtrees under that node,
-3. a way to insert into the tree,
-4. a way to get information out of the tree.
+These points boil down to how data is inserted and how the tree is traversed.
 
-We will explore how to achieve these needs with two methods, then examine the Tree class
- 
+The example given is of an insert method that inserts top to bottom, and left to right
+(breadth first)
+
+-note on breadth first search- 
+	A breadth first search identifies items from search key or root first, then left to right moving down the tree. it is able to 'move down the tree' because as it identifies all elements at a certain level of the tree, it is recognizing the attributes of the subtrees, and then has a map of where to iterate over in the next level of nesting in the tree. 
+	The ability to discern left and right (binary) allows an evaluation sequence (tree structure) to form for the nested items because it will evaluate left to right.
+
+	Something to keep in mind with a breadth first tree is that it will be consistent in its growth, but its consistency comes from its exponential nature. care should be taken to segment trees accordingly when working with lots of data due to this fact.
+
 =end
+
+class Tree
+
+	#These three attributes give our tree the ability to cover all necessary attributes of a binary tree.
+	attr_accessor :left
+	attr_accessor :right
+	attr_accessor :data
+
+	#setting x to nil allows us to create an empty node, and left and right are nil, as to not create children automatically upon the creation of a node.
+	def initialize(x = nil)
+		@left = nil
+		@right = nil
+		@data = x
+	end
+
+	def insert(x)
+		#This list will hold previous node/children combinations and thusly the whole tree in an array. IT STRIKES ME THAT YOU COULD NOT HAVE SINGLE CHILD NODES WITH THIS APPROACH.
+		list = []
+		if @data == nil
+			@data = x
+			#This says that if we have a node, start by creating a left subtree
+		elsif @left == nil
+			@left = Tree.new(x)
+			#If we have a node and a left subtree, create a right subtree
+		elsif @right == nil
+			@right = Tree.new(x)
+			#if we already have a node and a left and a right subtree..
+		else
+			list << @left
+			list << @right
+			#This loop prevents us form keeping nil data in our array and ensures that every space in the tree is filled before moving onto the next node creation. 
+			loop do
+				node = list.shift
+				if node.left == nil
+					node.insert(x)
+					break
+				else
+					list << node.left
+				end
+				if node.right == nil
+					node.insert(x)
+					break
+				else 
+					list << node.right
+				end
+			end
+		end
+	end
+
+	def traverse()
+		#you have to navigate one section at a time with this method.
+		list = []
+		yield @data
+		list << @left if @left != nil
+		list << @right if @right != nil
+		loop do
+			break if list.empty?
+			node = list.shift
+			yield node.data
+			list << node.left if node.left != nil
+			list << node.right if node.right != nil
+		end
+	end
+
+end
+
+items = [1,2,3,4,5,6,7]
+
+tree = Tree.new
+
+items.each {|x| tree.insert(x)}
+
+tree.traverse {|x| print "#{x} "}
+
+class SortTree < Tree
+
+	def insert(x)
+		if @data == nil
+			@data = x
+			#Here we sort the left and right data and insert all of the data in the tree in a sorted order.
+		elsif x <= @data
+			if @left == nil
+				@left = SortTree.new(x)
+			else
+				@left.insert(x)
+			end
+		else
+			if @right == nil
+				@right = SortTree.new(x)
+			else 
+				@right.insert(x)
+			end
+		end
+	end
+	#We recursively iterate through our sorted left and right groups separately and yield the data at different points 
+	def inorder()
+		@left.inorder {|y| yield y} if @left != nil
+		yield @data
+		@right.inorder {|y| yield y} if @right != nil
+	end
+
+	def preorder()
+		yield @data
+		@left.preorder {|y| yield y} if @left != nil
+		@right.preorder {|y| yield y} if @right != nil
+	end
+
+	def postorder()
+		@left.postorder {|y| yield y} if @left != nil
+		@right.postorder {|y| yield y} if @right != nil
+		yield @data
+	end
+	#I dont understand the structure of this sort.
+
+	
+	def search(x)
+		if self.data == x
+			return self
+		elsif x < self.data
+			return left ? left.search(x) : nil
+		else 
+			return right ? right.search(x) :nil
+		end
+	end
+
+end
+
+items = [50,20,80,10,30,70,49,34,66,22,3,124,553]
+
+tree = SortTree.new
+
+items.each {|x| tree.insert(x)}
+puts
+tree.inorder {|x| print x, " "}
+puts
+tree.preorder {|x| print x, " "}
+puts
+tree.postorder {|x| print x, " "}
+
+
+#Searching with binary trees.
+
+
+
+tree = SortTree.new
+
+items.each	{|x|	tree.insert(x)}
+puts
+p s1 = tree.search(70)
+
+
