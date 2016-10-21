@@ -20,10 +20,11 @@ Questions I have:
 	yes and more
 2. Where would you use a set in software?
 3. Is a set purely a methematical concept?
-	No, it is a high level concept that is modelled (attempted to be) in mathematics.
+	No, it is a high level concept that is modelled (attempted to be represented) in mathematics.
 4. Why do sets exist? 
 	Because they provide an ID structure to unordered data, as well as a
 	relational structure through subsets, supersets, power sets, and proper subsets.
+	In the same ways that you create a stack or queue as an array by limiting its features
 ----------------------------------------
 
 9.1 Working with sets
@@ -543,8 +544,9 @@ An undirected graph is simply connected, while a directed graph is connected by 
 =end
 
 class LowerMatrix < TriMatrix
+	#A trimatrix allows us to index one value with an x and y coordinate value to create an 'edge' instead of an index.
 
-	#Here we initialize the vertex as 0 and inherit the TriMatrix class allowing us to assign values at x,y coordinates.
+	#Here we initialize the edge as 0,0, and 0 and inherit the TriMatrix class allowing us to assign values at x,y coordinates.
 	def initialize
 		@store = ZeroArray.new
 	end
@@ -553,10 +555,70 @@ end
 
 class Graph
 
+#initialize handles both the creation of one or more or none vertices at a time, as well as adjusting the boundaries of the graph to its greatest extent.
 	def initialize(*edges)
+		#This creates a trimatrix array vertex that automatically populates with zeros in place of nil values
 		@store = LowerMatrix.new
+		#This is the variable holding the outer limit of the graph. We probably leave it undefined so the graph will only grow relatably by the max coordinate we insert.
 		@max = 0
-		#This each iteration creates the symmetrical negative version
-		edges.each do |e|
-			#The 0 and 1 indices represent the 
-			e[0], e[1] = e[1], e[0] if e[1] > e[0]
+		edges.each do |edge|
+			#I suspect that this is to keep everything in one section of the graph but Im not sure
+			edge[0], edge[1] = edge[1], edge[0] if edge[1] > edge[0]
+			#I suspect htis allocates a binary 'on' value to the coordinates of each 'edge'
+			@store[edge[0], edge[1]] = 1
+			#Here we set all of our active values in an array and call the max method on them to set a new graph boundary
+			@max = [@max, edge[0], edge[1]].max
+		end
+	end
+
+	#Here again we are performing swaps based on a greatey y then x comparison.
+	#This is a search by coordinate method.
+	def [](x,y)
+		if x > y
+			@store[x,y]
+		elsif x < y
+			@store[y,x]
+		else
+			0
+		end
+	end
+
+	#Here we can allocate values to our defined vertices
+	def []=(x,y,value)
+		if x > y
+			@store[x, y] = value
+		elsif x < y
+			@store[y, x] = value
+		else
+			0
+		end
+	end
+
+	#implicit return conditional to check for the existence of a vertex
+	def edge?(x,y)
+		x,y = y,x if x<y
+		@store[x,y]==1
+	end
+
+	#not sure whether this adds a non existing vertex or whether it resets/binary-'on's an existing vertex. I owuld assume that if it could add a vertex beyond the max, there would be a max adjustment method.
+	def add(x, y)
+		@store[x,y] = 1
+	end
+
+	#Will remove the value from an existing vertex
+	def remove(x, y)
+		x,y = y,x if x<y
+		@store[x,y] = 0
+		#degree is used here to see if an outer border exists anymore once the value has been removed from a vertex (is off)
+		if (degree @max)==0
+			@max -= 1
+		end
+	end
+
+	def vmax
+		@max
+	end
+
+	#
+	def degree(x)
+		(0..@max).inject(0){|sum, i| sum + self[x,i] }
